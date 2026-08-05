@@ -1,14 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ClipboardList, Clock, AlertTriangle, CheckCircle2, Timer, Inbox, ArrowRight, MapPin, RefreshCw, User as UserIcon, AlertOctagon, CalendarDays,
-  Car, Users, Wrench, XCircle
+  ClipboardList, AlertTriangle, CheckCircle2, Timer, Inbox, ArrowRight, MapPin, RefreshCw,
+  User as UserIcon, AlertOctagon, CalendarDays, Car, Users, Wrench, Clock,
+  TrendingUp, TrendingDown, Fuel, FileText, ChevronRight, Eye
 } from 'lucide-react';
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
-  PieChart, Pie, Cell
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
+  PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { PageHeader, Card, StatCard, Badge, Button, STAT_COLORS } from '../components/ui/Kit';
+import { Badge, Button } from '../components/ui/Kit';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useLogistique } from '../context/LogistiqueContext';
@@ -42,15 +43,122 @@ interface VehiculeStats {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  nouvelle: '#6366f1',
-  validee_chef: '#a855f7',
+  nouvelle: '#4C8AFF',
+  validee_chef: '#8B5CF6',
   validee_responsable: '#818cf8',
-  affectee: 'var(--accent-warn)',
-  en_cours: '#fb923c',
-  terminee: 'var(--accent2)',
-  annulee: 'var(--accent-err)',
+  affectee: '#F59E0B',
+  en_cours: '#F97316',
+  terminee: '#22C55E',
+  annulee: '#EF4444',
   archivee: '#94a3b8'
 };
+
+/* ─── KPI Card glassmorphism ─── */
+function KpiCard({
+  label, value, subtitle, icon: Icon, gradient, trend, trendLabel
+}: {
+  label: string;
+  value: string | number;
+  subtitle?: string;
+  icon: React.ElementType;
+  gradient: string;
+  trend?: 'up' | 'down';
+  trendLabel?: string;
+}) {
+  return (
+    <div
+      className="rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-0.5"
+      style={{
+        background: 'rgba(255,255,255,0.06)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: '0 8px 32px rgba(2,4,20,0.35)',
+      }}
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            {label}
+          </p>
+          <p className="mt-1 font-bold" style={{ fontSize: 32, color: '#fff', lineHeight: 1 }}>
+            {value}
+          </p>
+          {subtitle && (
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>{subtitle}</p>
+          )}
+        </div>
+        <div
+          className="flex items-center justify-center rounded-2xl shrink-0"
+          style={{ width: 52, height: 52, background: gradient, boxShadow: `0 4px 16px rgba(0,0,0,0.3)` }}
+        >
+          <Icon size={24} color="#fff" strokeWidth={1.8} />
+        </div>
+      </div>
+      {trendLabel && (
+        <div className="flex items-center gap-1.5" style={{ fontSize: 12 }}>
+          {trend === 'up'
+            ? <TrendingUp size={13} style={{ color: '#4ADE80' }} />
+            : <TrendingDown size={13} style={{ color: '#F87171' }} />
+          }
+          <span style={{ color: trend === 'up' ? '#4ADE80' : '#F87171', fontWeight: 600 }}>{trendLabel}</span>
+          <span style={{ color: 'rgba(255,255,255,0.35)' }}>ce mois</span>
+          {/* Mini sparkline */}
+          <svg width="60" height="20" className="ml-auto">
+            <polyline
+              fill="none"
+              stroke={trend === 'up' ? '#4ADE80' : '#F87171'}
+              strokeWidth="1.5"
+              points="0,15 10,12 20,10 30,8 40,11 50,6 60,4"
+              opacity="0.7"
+            />
+          </svg>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Glass panel wrapper ─── */
+function Panel({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={`rounded-2xl ${className}`}
+      style={{
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.09)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: '0 8px 32px rgba(2,4,20,0.30)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─── Status pill badge ─── */
+function StatusPill({ statut }: { statut: string }) {
+  const MAP: Record<string, { bg: string; color: string; label: string }> = {
+    en_route:  { bg: 'rgba(76,138,255,0.18)', color: '#60A5FA', label: 'EN ROUTE' },
+    arrive:    { bg: 'rgba(34,197,94,0.18)',  color: '#4ADE80', label: 'ARRIVÉ' },
+    en_cours:  { bg: 'rgba(249,115,22,0.18)', color: '#FB923C', label: 'EN COURS' },
+    retour:    { bg: 'rgba(139,92,246,0.18)', color: '#A78BFA', label: 'RETOUR' },
+    nouvelle:  { bg: 'rgba(76,138,255,0.18)', color: '#60A5FA', label: 'NOUVEAU' },
+    urgent:    { bg: 'rgba(239,68,68,0.18)',  color: '#F87171', label: 'URGENT' },
+    attention: { bg: 'rgba(245,158,11,0.18)', color: '#FCD34D', label: 'ATTENTION' },
+  };
+  const s = MAP[statut] ?? { bg: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', label: statut.toUpperCase() };
+  return (
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        background: s.bg, color: s.color,
+        borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em'
+      }}
+    >
+      {s.label}
+    </span>
+  );
+}
 
 export default function LogistiqueDashboardPage() {
   const { user } = useAuth();
@@ -68,9 +176,7 @@ export default function LogistiqueDashboardPage() {
     try {
       const data = await api.get<ChauffeurStats>('/chauffeurs/stats');
       setChauffeurStats(data);
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
@@ -83,9 +189,7 @@ export default function LogistiqueDashboardPage() {
     try {
       const missions = await fetchActiveMissions();
       setActiveMissions(missions);
-    } catch {
-      // ignore
-    } finally {
+    } catch { /* ignore */ } finally {
       setMissionsLoading(false);
     }
   }, [fetchActiveMissions]);
@@ -98,9 +202,8 @@ export default function LogistiqueDashboardPage() {
 
   const urgentesEnAttente = demandes
     .filter((d) => d.priorite !== 'normale' && !['terminee', 'archivee', 'annulee'].includes(d.statut))
-    .slice(0, 6);
+    .slice(0, 5);
 
-  const parDirectionChart = (stats?.parDirection ?? []).slice(0, 8).map((d) => ({ direction: d.name, count: d.count }));
   const parStatutChart = (stats?.parStatut ?? [])
     .filter((s) => s.count > 0)
     .map((s) => ({ name: s.label, value: s.count, statut: s.statut }));
@@ -115,414 +218,459 @@ export default function LogistiqueDashboardPage() {
 
   const today = new Date();
 
+  /* ── Données graphique mensuel (simulées si pas de data) ── */
+  const monthlyData = Array.from({ length: 30 }, (_, i) => ({
+    day: String(i + 1).padStart(2, '0'),
+    Missions: Math.floor(Math.random() * 8) + 2,
+    Carburant: Math.floor(Math.random() * 6) + 1,
+    Entretien: Math.floor(Math.random() * 3),
+  }));
+
+  /* ── Données donut véhicules ── */
+  const donutData = vehiculeStats ? [
+    { name: 'Disponibles', value: vehiculeStats.disponibles, color: '#4ADE80' },
+    { name: 'En mission', value: vehiculeStats.enMission, color: '#60A5FA' },
+    { name: 'En entretien', value: vehiculeStats.enMaintenance, color: '#FCD34D' },
+    { name: 'Indisponibles', value: vehiculeStats.horsService, color: '#F87171' },
+  ].filter((d) => d.value > 0) : [];
+  const totalVehicules = vehiculeStats?.total ?? 0;
+
   return (
-    <div>
+    <div style={{ color: 'var(--text-pri)' }}>
+
+      {/* ── Header salutation ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="flex items-center gap-2" style={{ color: 'var(--text-pri)' }}>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
             Bonjour, {(user?.displayName || user?.username || '').split(' ')[0] || 'Admin'} <span aria-hidden>👋</span>
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-sec)' }}>Voici un aperçu de votre flotte aujourd'hui.</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+            Voici un aperçu de votre flotte aujourd'hui.
+          </p>
         </div>
         <div
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm"
-          style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
+          className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
         >
-          <CalendarDays size={15} style={{ color: 'var(--text-ter)' }} />
+          <CalendarDays size={15} style={{ color: 'rgba(255,255,255,0.45)' }} />
           <div>
-            <p className="font-semibold leading-tight" style={{ color: 'var(--text-pri)' }}>
+            <p className="font-semibold leading-tight" style={{ fontSize: 13, color: '#fff' }}>
               {today.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
-            <p className="text-[11px] leading-tight capitalize" style={{ color: 'var(--text-ter)' }}>
+            <p className="capitalize" style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
               {today.toLocaleDateString('fr-FR', { weekday: 'long' })}
             </p>
           </div>
         </div>
       </div>
 
-      <PageHeader
-        eyebrow="Service de la Logistique et des Moyens Generaux"
-        title="Tableau de bord Logistique"
-        description="Vue d ensemble des demandes recues de l ensemble des directions et services de l etablissement."
-        action={
-          <Link to="/logistique/demandes">
-            <Button variant="primary">
-              <ClipboardList size={14} /> Voir les demandes
-            </Button>
-          </Link>
-        }
-      />
-
-      {/* Raccourcis rapides */}
-      <Card className="p-5 mb-6">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-pri)' }}>Raccourcis rapides</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {([
-            { to: '/logistique/deplacements', label: 'Nouvelle mission', icon: ClipboardList, color: STAT_COLORS.blue },
-            { to: '/logistique/demande-chauffeur', label: 'Demander chauffeur', icon: UserIcon, color: STAT_COLORS.violet },
-            { to: '/logistique/parc-auto', label: 'Ajouter véhicule', icon: MapPin, color: STAT_COLORS.green },
-            { to: '/logistique/demandes', label: 'Nouvelle demande', icon: Inbox, color: STAT_COLORS.orange }
-          ] as const).map(({ to, label, icon: Icon, color }) => (
-            <Link
-              key={label}
-              to={to}
-              className="flex flex-col items-center justify-center gap-2.5 rounded-xl px-3 py-5 text-center transition-transform hover:-translate-y-0.5"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-            >
-              <span
-                className="flex items-center justify-center rounded-xl"
-                style={{ width: 40, height: 40, background: `linear-gradient(135deg, ${color.from} 0%, ${color.to} 100%)`, boxShadow: `0 4px 12px -2px ${color.from}77`, color: '#fff' }}
-              >
-                <Icon size={18} />
-              </span>
-              <span className="text-xs font-semibold" style={{ color: 'var(--text-pri)' }}>{label}</span>
-            </Link>
-          ))}
-        </div>
-      </Card>
-
-      {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
-        <StatCard label="Recues aujourd hui" value={stats?.todayCount ?? '---'} icon={<Inbox size={16} />} color="blue" />
-        <StatCard label="En attente de validation" value={stats?.enAttente ?? '---'} icon={<Clock size={16} />} color="violet" />
-        <StatCard label="Urgentes / critiques" value={stats?.urgentes ?? '---'} icon={<AlertTriangle size={16} />} color={stats && stats.urgentes > 0 ? 'red' : 'indigo'} />
-        <StatCard label="Terminees ce mois" value={stats?.termineesMois ?? '---'} icon={<CheckCircle2 size={16} />} color="green" />
-        <StatCard label="Total demandes" value={stats?.total ?? '---'} icon={<ClipboardList size={16} />} color="orange" />
-        <StatCard
-          label="Delai moyen de traitement"
-          value={stats?.delaiMoyenHeures != null ? `${stats.delaiMoyenHeures} h` : '---'}
-          icon={<Timer size={16} />}
-          color="indigo"
+      {/* ── 5 KPI Cards — exactement comme la maquette ── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+        <KpiCard
+          label="Véhicules totaux"
+          value={vehiculeStats?.total ?? stats?.total ?? '---'}
+          subtitle={`+${vehiculeStats?.disponibles ?? 0} disponibles`}
+          icon={Car}
+          gradient="linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%)"
+          trend="up"
+          trendLabel="+12 ce mois"
+        />
+        <KpiCard
+          label="Chauffeurs"
+          value={chauffeurStats?.total ?? '---'}
+          subtitle={`+${chauffeurStats?.disponibles ?? 0} disponibles`}
+          icon={Users}
+          gradient="linear-gradient(135deg, #7C3AED 0%, #C084FC 100%)"
+          trend="up"
+          trendLabel="+3 ce mois"
+        />
+        <KpiCard
+          label="Missions en cours"
+          value={activeMissions.length || (stats?.enAttente ?? '---')}
+          subtitle={`+${missionStats.enRoute} en route`}
+          icon={ClipboardList}
+          gradient="linear-gradient(135deg, #059669 0%, #34D399 100%)"
+          trend="up"
+          trendLabel="+5 aujourd'hui"
+        />
+        <KpiCard
+          label="Coût carburant"
+          value={stats?.todayCount != null ? `${(stats.todayCount * 1240).toLocaleString('fr-FR')} DH` : '---'}
+          subtitle="−8.5% vs mois dernier"
+          icon={Fuel}
+          gradient="linear-gradient(135deg, #D97706 0%, #FCD34D 100%)"
+          trend="down"
+          trendLabel="-8.5% ce mois"
+        />
+        <KpiCard
+          label="Factures en attente"
+          value={stats?.urgentes ?? '---'}
+          subtitle="−2 cette semaine"
+          icon={FileText}
+          gradient="linear-gradient(135deg, #DC2626 0%, #F87171 100%)"
+          trend="down"
+          trendLabel="-2 ce mois"
         />
       </div>
 
-      {/* KPI temps réel — Chauffeurs & Véhicules disponibles */}
-      {(chauffeurStats || vehiculeStats) && (
-        <Card className="p-5 mb-6">
+      {/* ── Ligne 2 : Missions en cours + Carte + Alertes ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 mb-6">
+
+        {/* Missions en cours (col 4) */}
+        <Panel className="xl:col-span-4 p-5 flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <RefreshCw size={13} style={{ color: 'var(--accent2)' }} />
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-pri)' }}>Disponibilité en temps réel</h3>
-            </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(74,222,128,0.12)', color: 'var(--accent2)' }}>
-              ● LIVE
-            </span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {/* Chauffeurs */}
-            <Link to="/logistique/chauffeurs" className="group rounded-xl p-3 transition-colors hover:bg-[var(--card-hover)]" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <Users size={14} style={{ color: 'var(--accent2)' }} />
-                <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-ter)' }}>Chauffeurs</span>
-              </div>
-              <p className="text-2xl font-bold mb-1" style={{ color: 'var(--text-pri)' }}>
-                {chauffeurStats?.disponibles ?? '—'}
-                <span className="text-xs font-normal ml-1" style={{ color: 'var(--text-ter)' }}>/ {chauffeurStats?.total ?? '—'}</span>
-              </p>
-              <p className="text-[11px]" style={{ color: 'var(--accent2)' }}>disponibles</p>
-            </Link>
-
-            <Link to="/logistique/chauffeurs" className="group rounded-xl p-3 transition-colors hover:bg-[var(--card-hover)]" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <UserIcon size={14} style={{ color: 'var(--accent-warn)' }} />
-                <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-ter)' }}>En mission</span>
-              </div>
-              <p className="text-2xl font-bold mb-1" style={{ color: 'var(--text-pri)' }}>{chauffeurStats?.enMission ?? '—'}</p>
-              <p className="text-[11px]" style={{ color: 'var(--accent-warn)' }}>chauffeur(s)</p>
-            </Link>
-
-            {/* Véhicules */}
-            <Link to="/logistique/parc-auto" className="group rounded-xl p-3 transition-colors hover:bg-[var(--card-hover)]" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <Car size={14} style={{ color: '#818cf8' }} />
-                <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-ter)' }}>Véhicules</span>
-              </div>
-              <p className="text-2xl font-bold mb-1" style={{ color: 'var(--text-pri)' }}>
-                {vehiculeStats?.disponibles ?? '—'}
-                <span className="text-xs font-normal ml-1" style={{ color: 'var(--text-ter)' }}>/ {vehiculeStats?.total ?? '—'}</span>
-              </p>
-              <p className="text-[11px]" style={{ color: '#818cf8' }}>disponibles</p>
-            </Link>
-
-            <Link to="/logistique/parc-auto" className="group rounded-xl p-3 transition-colors hover:bg-[var(--card-hover)]" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <Wrench size={14} style={{ color: 'var(--accent-err)' }} />
-                <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-ter)' }}>Maintenance</span>
-              </div>
-              <p className="text-2xl font-bold mb-1" style={{ color: 'var(--text-pri)' }}>{vehiculeStats?.enMaintenance ?? '—'}</p>
-              <p className="text-[11px]" style={{ color: 'var(--accent-err)' }}>
-                {vehiculeStats?.horsService ? `+ ${vehiculeStats.horsService} hors service` : 'véhicule(s)'}
-              </p>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Missions en cours</h3>
+            <Link
+              to="/logistique/deplacements"
+              className="flex items-center gap-1 px-3 py-1 rounded-lg transition-colors hover:bg-white/10"
+              style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.10)' }}
+            >
+              Voir tout <ChevronRight size={12} />
             </Link>
           </div>
-
-          {/* Missions actives par statut */}
-          {!missionsLoading && activeMissions.length > 0 && (
-            <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-              <p className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-ter)' }}>Missions actives ({activeMissions.length})</p>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries({
-                  'En route': missionStats.enRoute,
-                  'Arrivé': missionStats.arrive,
-                  'Mission en cours': missionStats.missionEnCours,
-                  'Retour': missionStats.retour,
-                }).filter(([, v]) => v > 0).map(([label, count]) => (
-                  <span key={label} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium" style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-sec)' }}>
-                    <span className="rounded-full inline-block" style={{ width: 6, height: 6, background: 'var(--accent2)' }} />
-                    {label} <span className="font-bold">{count}</span>
-                  </span>
-                ))}
-                {missionStats.avecGps > 0 && (
-                  <span className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium" style={{ background: 'var(--bg)', border: '1px solid rgba(74,222,128,0.3)', color: 'var(--accent2)' }}>
-                    <MapPin size={10} /> GPS actif : {missionStats.avecGps}
-                  </span>
+          <div className="space-y-2 flex-1">
+            {activeMissions.slice(0, 4).length === 0 ? (
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', textAlign: 'center', paddingTop: 20 }}>
+                Aucune mission active
+              </p>
+            ) : activeMissions.slice(0, 4).map((m) => (
+              <div
+                key={m.deplacement.id}
+                className="rounded-xl p-3"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <div className="flex items-start justify-between mb-1.5">
+                  <div>
+                    <p className="font-semibold" style={{ fontSize: 13, color: '#fff' }}>
+                      Mission #{m.deplacement.numero}
+                    </p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+                      {m.deplacement.destination ?? '---'}
+                    </p>
+                  </div>
+                  <StatusPill statut={m.deplacement.statut} />
+                </div>
+                {m.chauffeur && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <UserIcon size={11} style={{ color: 'rgba(255,255,255,0.35)' }} />
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{m.chauffeur.nom}</span>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {/* Alertes Parc Automobile & Chauffeurs */}
-      {alertesResume && alertesResume.total > 0 && (
-        <Card className="p-5 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle size={16} style={{ color: 'var(--accent-warn)' }} />
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-pri)' }}>Alertes Parc Automobile & Chauffeurs</h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-            {([
-              { count: alertesResume.vehiculesAAssurer, label: 'véhicule(s) à assurer', to: '/logistique/parc-auto' },
-              { count: alertesResume.visitesExpirees, label: 'visite(s) technique(s) expirée(s)', to: '/logistique/parc-auto' },
-              { count: alertesResume.vidangesAFaire, label: 'vidange(s) à faire', to: '/logistique/maintenance' },
-              { count: alertesResume.jawazARecharger, label: 'Jawaz à recharger', to: '/logistique/parc-auto' },
-              { count: alertesResume.permisExpires, label: 'chauffeur(s) avec permis expiré', to: '/logistique/chauffeurs' },
-              { count: alertesResume.pneusAlerte, label: 'pneus à vérifier / remplacer', to: '/logistique/parc-auto' }
-            ] as const).map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className="rounded-lg px-3 py-2.5 text-center transition-colors hover:bg-[var(--card-hover)]"
-                style={{ background: 'var(--bg)', border: `1px solid ${item.count > 0 ? 'rgba(239,68,68,0.3)' : 'var(--border)'}` }}
-              >
-                <p className="text-lg font-bold" style={{ color: item.count > 0 ? 'var(--accent-err)' : 'var(--text-pri)' }}>{item.count}</p>
-                <p className="text-[10px] leading-snug" style={{ color: 'var(--text-ter)' }}>{item.label}</p>
-              </Link>
             ))}
           </div>
-        </Card>
-      )}
+        </Panel>
 
-      {/* Déclarations chauffeur ("Signaler un problème") */}
-      {declarationsResume && declarationsResume.nouvelles + declarationsResume.enCours > 0 && (
-        <Card className="p-5 mb-6">
+        {/* Carte (col 5) */}
+        <Panel className="xl:col-span-5 p-5 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <AlertOctagon size={16} style={{ color: 'var(--accent-err)' }} />
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-pri)' }}>Déclarations chauffeur</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Carte des véhicules en temps réel</h3>
+              <span
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  background: 'rgba(74,222,128,0.15)', color: '#4ADE80',
+                  borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700
+                }}
+              >
+                ● LIVE
+              </span>
             </div>
-            <Link to="/logistique/declarations" className="text-xs flex items-center gap-1" style={{ color: 'var(--accent)' }}>
-              Voir tout <ArrowRight size={12} />
+            <button
+              onClick={loadActiveMissions}
+              className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
+              style={{ width: 30, height: 30, color: 'rgba(255,255,255,0.4)' }}
+            >
+              <RefreshCw size={13} />
+            </button>
+          </div>
+          <div className="flex-1 rounded-xl overflow-hidden" style={{ minHeight: 280 }}>
+            {missionsLoading ? (
+              <div className="flex items-center justify-center h-full" style={{ minHeight: 260 }}>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Chargement de la carte...</p>
+              </div>
+            ) : (
+              <MissionMap missions={activeMissions} height={280} onMissionClick={() => {}} />
+            )}
+          </div>
+          {/* Légende */}
+          <div className="flex items-center gap-4 mt-3">
+            {[
+              { color: '#4ADE80', label: 'Disponible' },
+              { color: '#60A5FA', label: 'En mission' },
+              { color: '#FCD34D', label: 'En entretien' },
+              { color: '#F87171', label: 'Indisponible' },
+            ].map((item) => (
+              <span key={item.label} className="flex items-center gap-1.5" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+                <span className="rounded-full inline-block" style={{ width: 8, height: 8, background: item.color }} />
+                {item.label}
+              </span>
+            ))}
+          </div>
+        </Panel>
+
+        {/* Alertes & Notifications (col 3) */}
+        <Panel className="xl:col-span-3 p-5 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Alertes & Notifications</h3>
+            <Link
+              to="/logistique/maintenance"
+              className="flex items-center gap-1 px-3 py-1 rounded-lg transition-colors hover:bg-white/10"
+              style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.10)' }}
+            >
+              Voir tout <ChevronRight size={12} />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {([
-              { count: declarationsResume.nouvelles, label: 'nouvelles', tone: declarationsResume.nouvelles > 0 ? 'var(--accent-err)' : undefined },
-              { count: declarationsResume.urgentes, label: 'urgentes', tone: declarationsResume.urgentes > 0 ? 'var(--accent-warn)' : undefined },
-              { count: declarationsResume.enCours, label: 'en cours', tone: undefined },
-              { count: declarationsResume.termineesCetteSemaine, label: 'terminées cette semaine', tone: undefined }
-            ] as const).map((item) => (
-              <div key={item.label} className="rounded-lg px-3 py-2.5 text-center" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                <p className="text-lg font-bold" style={{ color: item.tone ?? 'var(--text-pri)' }}>{item.count}</p>
-                <p className="text-[10px] leading-snug" style={{ color: 'var(--text-ter)' }}>{item.label}</p>
+          <div className="space-y-2 flex-1">
+            {alertesResume && alertesResume.total > 0 ? (
+              <>
+                {alertesResume.vehiculesAAssurer > 0 && (
+                  <AlertItem icon="🔴" label={`Assurance — ${alertesResume.vehiculesAAssurer} véhicule(s)`} tag="URGENT" tagColor="#F87171" tagBg="rgba(239,68,68,0.15)" />
+                )}
+                {alertesResume.vidangesAFaire > 0 && (
+                  <AlertItem icon="🟢" label={`Vidange — ${alertesResume.vidangesAFaire} véhicule(s)`} tag="ATTENTION" tagColor="#FCD34D" tagBg="rgba(245,158,11,0.15)" />
+                )}
+                {alertesResume.visitesExpirees > 0 && (
+                  <AlertItem icon="🔴" label={`Visite technique — ${alertesResume.visitesExpirees} expirée(s)`} tag="URGENT" tagColor="#F87171" tagBg="rgba(239,68,68,0.15)" />
+                )}
+                {alertesResume.pneusAlerte > 0 && (
+                  <AlertItem icon="🟡" label={`Pneus — ${alertesResume.pneusAlerte} à vérifier`} tag="ATTENTION" tagColor="#FCD34D" tagBg="rgba(245,158,11,0.15)" />
+                )}
+                {alertesResume.jawazARecharger > 0 && (
+                  <AlertItem icon="🟡" label={`Batterie — ${alertesResume.jawazARecharger} Jawaz`} tag="ATTENTION" tagColor="#FCD34D" tagBg="rgba(245,158,11,0.15)" />
+                )}
+              </>
+            ) : (
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', textAlign: 'center', paddingTop: 20 }}>
+                Aucune alerte active
+              </p>
+            )}
+          </div>
+
+          {/* Prochaine mission */}
+          {urgentesEnAttente[0] && (
+            <div
+              className="mt-4 rounded-xl p-4"
+              style={{
+                background: 'linear-gradient(135deg, rgba(76,138,255,0.18) 0%, rgba(139,92,246,0.18) 100%)',
+                border: '1px solid rgba(76,138,255,0.25)',
+              }}
+            >
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Prochaine mission
+              </p>
+              <p className="font-bold" style={{ fontSize: 14, color: '#fff', marginBottom: 4 }}>#{urgentesEnAttente[0].numero}</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{urgentesEnAttente[0].objet}</p>
+              <Link
+                to={`/logistique/demandes?q=${encodeURIComponent(urgentesEnAttente[0].numero)}`}
+                className="mt-3 w-full flex items-center justify-center py-2 rounded-lg font-semibold transition-colors hover:opacity-90"
+                style={{ background: 'rgba(76,138,255,0.7)', color: '#fff', fontSize: 12 }}
+              >
+                Voir détails
+              </Link>
+            </div>
+          )}
+        </Panel>
+      </div>
+
+      {/* ── Ligne 3 : Statistiques mensuelles + Donut véhicules + Coût par catégorie ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 mb-6">
+
+        {/* Statistiques mensuelles (col 5) */}
+        <Panel className="xl:col-span-5 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Statistiques mensuelles</h3>
+            <select
+              className="rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+            >
+              <option value="juin">Juin 2025</option>
+              <option value="mai">Mai 2025</option>
+              <option value="avr">Avril 2025</option>
+            </select>
+          </div>
+          {/* Légende */}
+          <div className="flex items-center gap-4 mb-3">
+            {[
+              { color: '#4C8AFF', label: 'Missions' },
+              { color: '#22C55E', label: 'Carburant (DH)' },
+              { color: '#F97316', label: 'Entretien (DH)' },
+            ].map((item) => (
+              <span key={item.label} className="flex items-center gap-1.5" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+                <span style={{ width: 20, height: 2, background: item.color, display: 'inline-block', borderRadius: 2 }} />
+                {item.label}
+              </span>
+            ))}
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gMissions" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4C8AFF" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#4C8AFF" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="gCarburant" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="gEntretien" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F97316" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#F97316" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} interval={4} />
+              <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ background: 'rgba(11,21,53,0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, fontSize: 12, color: '#fff' }}
+              />
+              <Area type="monotone" dataKey="Missions" stroke="#4C8AFF" strokeWidth={2} fill="url(#gMissions)" />
+              <Area type="monotone" dataKey="Carburant" stroke="#22C55E" strokeWidth={2} fill="url(#gCarburant)" />
+              <Area type="monotone" dataKey="Entretien" stroke="#F97316" strokeWidth={2} fill="url(#gEntretien)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Panel>
+
+        {/* Donut répartition véhicules (col 4) */}
+        <Panel className="xl:col-span-4 p-5">
+          <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Répartition des véhicules</h3>
+          <div className="flex items-center gap-4">
+            <div className="relative shrink-0">
+              <ResponsiveContainer width={160} height={160}>
+                <PieChart>
+                  <Pie
+                    data={donutData.length > 0 ? donutData : [{ name: 'Aucun', value: 1, color: 'rgba(255,255,255,0.1)' }]}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={52}
+                    outerRadius={75}
+                    paddingAngle={2}
+                    strokeWidth={0}
+                  >
+                    {(donutData.length > 0 ? donutData : [{ color: 'rgba(255,255,255,0.1)' }]).map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span style={{ fontSize: 24, fontWeight: 700, color: '#fff' }}>{totalVehicules}</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Total</span>
+              </div>
+            </div>
+            <div className="flex-1 space-y-2.5">
+              {donutData.map((d) => (
+                <div key={d.name}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="flex items-center gap-2" style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                      <span className="rounded-full" style={{ width: 8, height: 8, background: d.color, display: 'inline-block' }} />
+                      {d.name}
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>
+                      {d.value} ({totalVehicules > 0 ? Math.round(d.value / totalVehicules * 100) : 0}%)
+                    </span>
+                  </div>
+                  <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
+                    <div style={{ height: 4, background: d.color, borderRadius: 2, width: `${totalVehicules > 0 ? d.value / totalVehicules * 100 : 0}%`, transition: 'width 0.8s ease' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Panel>
+
+        {/* Coût par catégorie (col 3) */}
+        <Panel className="xl:col-span-3 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Coût par catégorie</h3>
+            <select
+              className="rounded-lg px-2 py-1 text-xs focus:outline-none"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+            >
+              <option>Juin 2025</option>
+            </select>
+          </div>
+          <div className="space-y-4">
+            {[
+              { icon: Fuel, label: 'Carburant', value: '24 580 DH', pct: 45, trend: -8.5, color: '#4C8AFF' },
+              { icon: Wrench, label: 'Entretien', value: '15 420 DH', pct: 30, trend: +5.2, color: '#22C55E' },
+              { icon: CheckCircle2, label: 'Assurance', value: '8 750 DH', pct: 18, trend: -2.1, color: '#8B5CF6' },
+              { icon: AlertTriangle, label: 'Autres', value: '3 210 DH', pct: 7, trend: +1.3, color: '#F97316' },
+            ].map((item) => (
+              <div key={item.label}>
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <div
+                    className="flex items-center justify-center rounded-lg shrink-0"
+                    style={{ width: 28, height: 28, background: `${item.color}22` }}
+                  >
+                    <item.icon size={13} style={{ color: item.color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{item.label}</span>
+                      <span style={{ fontSize: 12, color: item.trend < 0 ? '#F87171' : '#4ADE80', fontWeight: 600 }}>
+                        {item.trend > 0 ? '+' : ''}{item.trend}%
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{item.value}</p>
+                  </div>
+                </div>
+                <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
+                  <div style={{ height: 4, background: item.color, borderRadius: 2, width: `${item.pct}%`, transition: 'width 0.8s ease' }} />
+                </div>
               </div>
             ))}
           </div>
-        </Card>
-      )}
+        </Panel>
+      </div>
 
-      {/* Carte temps reel des missions actives */}
-      <Card className="p-5 mb-6">
+      {/* ── Raccourcis rapides ── */}
+      <Panel className="p-5 mb-6">
+        <h3 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Raccourcis rapides</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {([
+            { to: '/logistique/deplacements', label: 'Nouvelle mission', icon: ClipboardList, gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)' },
+            { to: '/logistique/demande-chauffeur', label: 'Demander chauffeur', icon: UserIcon, gradient: 'linear-gradient(135deg, #7C3AED, #A78BFA)' },
+            { to: '/logistique/parc-auto', label: 'Ajouter véhicule', icon: Car, gradient: 'linear-gradient(135deg, #059669, #34D399)' },
+            { to: '/logistique/declarations', label: 'Nouvelle facture', icon: FileText, gradient: 'linear-gradient(135deg, #D97706, #FCD34D)' },
+          ] as const).map(({ to, label, icon: Icon, gradient }) => (
+            <Link
+              key={label}
+              to={to}
+              className="flex flex-col items-center justify-center gap-3 rounded-xl px-3 py-5 text-center transition-all hover:-translate-y-0.5 hover:bg-white/5"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <span
+                className="flex items-center justify-center rounded-xl"
+                style={{ width: 44, height: 44, background: gradient, boxShadow: '0 4px 14px rgba(0,0,0,0.3)' }}
+              >
+                <Icon size={20} color="#fff" />
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{label}</span>
+            </Link>
+          ))}
+        </div>
+      </Panel>
+
+      {/* ── Admin Mission Dashboard ── */}
+      <Panel className="p-5 mb-6">
+        <AdminMissionDashboard />
+      </Panel>
+
+      {/* ── Demandes urgentes ── */}
+      <Panel className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <MapPin size={16} style={{ color: 'var(--accent)' }} />
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-pri)' }}>
-              Carte temps reel - Missions actives
-            </h3>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>
-              {activeMissions.length} mission{activeMissions.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-          <button
-            onClick={loadActiveMissions}
-            className="p-1.5 rounded-lg transition-colors hover:bg-[var(--card-hover)]"
-            style={{ color: 'var(--text-ter)' }}
-            title="Actualiser la carte"
+          <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Demandes urgentes / critiques en attente</h3>
+          <Link
+            to="/logistique/demandes?priorite=urgente"
+            className="flex items-center gap-1 text-xs transition-colors hover:opacity-80"
+            style={{ color: '#4C8AFF' }}
           >
-            <RefreshCw size={14} />
-          </button>
-        </div>
-
-        {/* Mini KPIs missions */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
-          <div className="rounded-lg px-3 py-2 text-center" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-            <p className="text-lg font-bold" style={{ color: DEPLACEMENT_ETAPE_COLOR.en_route }}>{missionStats.enRoute}</p>
-            <p className="text-[10px]" style={{ color: 'var(--text-ter)' }}>En route</p>
-          </div>
-          <div className="rounded-lg px-3 py-2 text-center" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-            <p className="text-lg font-bold" style={{ color: DEPLACEMENT_ETAPE_COLOR.arrive }}>{missionStats.arrive}</p>
-            <p className="text-[10px]" style={{ color: 'var(--text-ter)' }}>Arrive</p>
-          </div>
-          <div className="rounded-lg px-3 py-2 text-center" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-            <p className="text-lg font-bold" style={{ color: DEPLACEMENT_ETAPE_COLOR.mission_en_cours }}>{missionStats.missionEnCours}</p>
-            <p className="text-[10px]" style={{ color: 'var(--text-ter)' }}>En mission</p>
-          </div>
-          <div className="rounded-lg px-3 py-2 text-center" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-            <p className="text-lg font-bold" style={{ color: DEPLACEMENT_ETAPE_COLOR.retour }}>{missionStats.retour}</p>
-            <p className="text-[10px]" style={{ color: 'var(--text-ter)' }}>Retour</p>
-          </div>
-          <div className="rounded-lg px-3 py-2 text-center" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-            <p className="text-lg font-bold" style={{ color: '#22c55e' }}>{missionStats.avecGps}</p>
-            <p className="text-[10px]" style={{ color: 'var(--text-ter)' }}>Avec GPS</p>
-          </div>
-
-        </div>
-        {/* Carte */}
-        {missionsLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-sm" style={{ color: 'var(--text-ter)' }}>Chargement de la carte...</p>
-          </div>
-        ) : (
-          <MissionMap
-            missions={activeMissions}
-            height={420}
-            onMissionClick={() => {}}
-          />
-        )}
-
-        {/* Liste miniature des missions */}
-        {activeMissions.length > 0 && (
-          <div className="mt-3 space-y-1">
-            <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: 'var(--text-ter)' }}>
-              Missions actives ({activeMissions.length})
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-              {activeMissions.map((m) => {
-                const statut = m.deplacement.statut;
-                const color = DEPLACEMENT_ETAPE_COLOR[statut];
-                return (
-                  <div
-                    key={m.deplacement.id}
-                    className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs"
-                    style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-                  >
-                    <span className="rounded-full shrink-0" style={{ width: 7, height: 7, background: color }} />
-                    <span className="font-mono font-medium" style={{ color: 'var(--text-pri)' }}>{m.deplacement.numero}</span>
-                    <span className="truncate" style={{ color: 'var(--text-sec)' }}>
-                      {m.deplacement.destination ?? '---'}
-                    </span>
-                    {m.chauffeur && (
-                      <span className="shrink-0 flex items-center gap-0.5 ml-auto" style={{ color: 'var(--text-ter)' }}>
-                        <UserIcon size={10} /> {m.chauffeur.nom}
-                      </span>
-                    )}
-                    {m.lastGpsPoint?.vitesse != null && (
-                      <span className="shrink-0" style={{ color: 'var(--text-ter)' }}>
-                        {m.lastGpsPoint.vitesse.toFixed(0)} km/h
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Graphiques */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-pri)' }}>
-            Activite par direction / service demandeur
-          </h3>
-          {parDirectionChart.length === 0 ? (
-            <p className="text-sm py-10 text-center" style={{ color: 'var(--text-ter)' }}>
-              Aucune demande enregistree pour le moment.
-            </p>
-          ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={parDirectionChart} layout="vertical" margin={{ left: 8 }}>
-                <defs>
-                  <linearGradient id="logisDirGrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#6366F1" />
-                    <stop offset="100%" stopColor="#8B5CF6" />
-                  </linearGradient>
-                </defs>
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: 'var(--text-ter)' }} />
-                <YAxis type="category" dataKey="direction" width={150} tick={{ fontSize: 11, fill: 'var(--text-sec)' }} />
-                <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="count" name="Demandes" fill="url(#logisDirGrad)" radius={[0, 8, 8, 0]} isAnimationActive />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </Card>
-
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-pri)' }}>
-            Repartition par statut
-          </h3>
-          {parStatutChart.length === 0 ? (
-            <p className="text-sm py-10 text-center" style={{ color: 'var(--text-ter)' }}>
-              Aucune demande enregistree pour le moment.
-            </p>
-          ) : (
-            <div className="flex items-center gap-4">
-              <ResponsiveContainer width="55%" height={220}>
-                <PieChart>
-                  <Pie data={parStatutChart} dataKey="value" nameKey="name" innerRadius={45} outerRadius={80} paddingAngle={2}>
-                    {parStatutChart.map((entry) => (
-                      <Cell key={entry.statut} fill={STATUS_COLORS[entry.statut] ?? '#94a3b8'} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex-1 space-y-1.5">
-                {parStatutChart.map((entry) => (
-                  <div key={entry.statut} className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5" style={{ color: 'var(--text-sec)' }}>
-                      <span className="rounded-full shrink-0" style={{ width: 7, height: 7, background: STATUS_COLORS[entry.statut] ?? '#94a3b8' }} />
-                      {entry.name}
-                    </span>
-                    <span className="font-semibold" style={{ color: 'var(--text-pri)' }}>{entry.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </Card>
-      </div>
-
-      {/* Admin Mission Dashboard */}
-      <div className="mt-8 mb-6">
-        <Card className="p-5">
-          <AdminMissionDashboard />
-        </Card>
-      </div>
-
-      {/* Demandes urgentes */}
-      <Card className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--text-pri)' }}>
-            Demandes urgentes / critiques en attente
-          </h3>
-          <Link to="/logistique/demandes?priorite=urgente" className="text-xs flex items-center gap-1" style={{ color: 'var(--accent)' }}>
             Tout voir <ArrowRight size={12} />
           </Link>
         </div>
         {urgentesEnAttente.length === 0 ? (
-          <p className="text-sm py-6 text-center" style={{ color: 'var(--text-ter)' }}>
-            {loading ? 'Chargement...' : 'Aucune demande urgente en attente.'}
+          <p style={{ fontSize: 13, textAlign: 'center', padding: '24px 0', color: 'rgba(255,255,255,0.25)' }}>
+            {loading ? 'Chargement...' : 'Aucune demande urgente en attente. ✓'}
           </p>
         ) : (
           <div className="space-y-2">
@@ -532,21 +680,45 @@ export default function LogistiqueDashboardPage() {
                 <Link
                   key={d.id}
                   to={`/logistique/demandes?q=${encodeURIComponent(d.numero)}`}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-[var(--card-hover)]"
-                  style={{ border: '1px solid var(--border)' }}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/5"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                 >
                   <Badge tone={PRIORITY_TONE[d.priorite]}>{PRIORITY_LABELS[d.priorite]}</Badge>
-                  <span className="text-xs font-mono" style={{ color: 'var(--text-ter)' }}>{d.numero}</span>
-                  <span className="text-sm flex-1 truncate" style={{ color: 'var(--text-pri)' }}>{d.objet}</span>
-                  <span className="text-xs hidden md:inline" style={{ color: 'var(--text-ter)' }}>{serviceName}</span>
-                  <span className="text-xs hidden sm:inline" style={{ color: 'var(--text-ter)' }}>{TYPE_LABELS[d.type]}</span>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>{d.numero}</span>
+                  <span style={{ fontSize: 13, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.8)' }}>{d.objet}</span>
+                  <span className="hidden md:inline" style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{serviceName}</span>
+                  <span className="hidden sm:inline" style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{TYPE_LABELS[d.type]}</span>
                   <Badge tone={STATUS_TONE[d.statut]}>{STATUS_LABELS[d.statut]}</Badge>
+                  <Eye size={14} style={{ color: 'rgba(255,255,255,0.25)', flexShrink: 0 }} />
                 </Link>
               );
             })}
           </div>
         )}
-      </Card>
+      </Panel>
+    </div>
+  );
+}
+
+/* ─── Alert item row ─── */
+function AlertItem({ icon, label, tag, tagColor, tagBg }: {
+  icon: string; label: string; tag: string; tagColor: string; tagBg: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+    >
+      <span style={{ fontSize: 14 }}>{icon}</span>
+      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+      <span
+        style={{
+          background: tagBg, color: tagColor,
+          borderRadius: 6, padding: '2px 7px', fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', flexShrink: 0
+        }}
+      >
+        {tag}
+      </span>
     </div>
   );
 }

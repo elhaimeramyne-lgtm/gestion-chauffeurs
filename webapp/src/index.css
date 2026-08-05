@@ -30,78 +30,88 @@
   input::placeholder, textarea::placeholder { color: var(--text-ter); }
 }
 
-/* ── CSS Variables — thème clair (défaut) ──────────────────────────────
-   Fond clair, cartes blanches à ombre douce, sidebar toujours sombre
-   (tokens --sidebar-*, indépendants du thème). Bascule vers le thème sombre
-   via [data-theme="dark"] sur <html> (voir lib/theme.ts). */
+/* ── CSS Variables — thème clair (fond bleu marine style maquette) ─────
+   Design glassmorphism bleu marine : sidebar sombre, fond page dégradé bleu,
+   cartes semi-transparentes avec backdrop-blur. */
 :root {
-  /* Backgrounds */
-  --bg:          #F3F4FA;
-  --surface:     rgba(255,255,255,0.85);
-  --card:        #FFFFFF;
-  --card-hover:  #EEF0F7;
-  --select-bg:   #FFFFFF;
+  /* Backgrounds — bleu marine profond comme la maquette */
+  --bg:          #0D1B3E;
+  --bg2:         #0A1628;
+  --surface:     rgba(255,255,255,0.06);
+  --card:        rgba(255,255,255,0.07);
+  --card-hover:  rgba(255,255,255,0.11);
+  --select-bg:   #1a2a52;
 
   /* Borders */
-  --border:      #EAEBF2;
-  --border-md:   #DDDFEA;
-  --border-glow: rgba(99,102,241,0.45);
+  --border:      rgba(255,255,255,0.12);
+  --border-md:   rgba(255,255,255,0.18);
+  --border-glow: rgba(99,143,255,0.55);
 
-  /* Accent palette — indigo / violet, cœur de l'identité */
-  --accent:      #6366F1;
-  --accent-dark: #4F46E5;
+  /* Accent palette — bleu électrique / violet */
+  --accent:      #4C8AFF;
+  --accent-dark: #2563EB;
   --accent2:     #22C55E;
   --violet:      #8B5CF6;
   --pink:        #EC4899;
   --accent-warn: #F59E0B;
   --accent-err:  #EF4444;
+  --accent-cyan: #22D3EE;
+  --accent-teal: #14B8A6;
+  --accent-orange: #F97316;
 
-  /* Dégradés signature */
-  --grad-brand:  linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-  --grad-btn:    linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-  --grad-line:   linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%);
+  /* Dégradés signature — bleu → violet comme les KPI cards */
+  --grad-brand:  linear-gradient(135deg, #4C8AFF 0%, #8B5CF6 100%);
+  --grad-btn:    linear-gradient(135deg, #4C8AFF 0%, #8B5CF6 100%);
+  --grad-line:   linear-gradient(90deg, #4C8AFF 0%, #8B5CF6 100%);
+  --grad-page:   linear-gradient(135deg, #0D1B3E 0%, #0A1628 60%, #0D1B3E 100%);
 
-  /* Lueurs (halo léger, utilisé avec parcimonie en clair) */
-  --glow-violet: 0 8px 24px rgba(99,102,241,0.22);
-  --glow-cyan:   0 8px 24px rgba(99,102,241,0.16);
-  --glow-btn:    0 8px 20px rgba(99,102,241,0.30);
+  /* KPI card gradients (correspondant aux 5 cards de la maquette) */
+  --grad-kpi-blue:    linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+  --grad-kpi-violet:  linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+  --grad-kpi-green:   linear-gradient(135deg, #059669 0%, #34D399 100%);
+  --grad-kpi-orange:  linear-gradient(135deg, #D97706 0%, #FCD34D 100%);
+  --grad-kpi-red:     linear-gradient(135deg, #DC2626 0%, #F87171 100%);
 
-  /* Texte */
-  --text-pri:    #171A2B;
-  --text-sec:    #6B7280;
-  --text-ter:    #9AA1B1;
-  --text-inv:    #FFFFFF;
+  /* Lueurs */
+  --glow-violet: 0 0 28px rgba(139,92,246,0.38);
+  --glow-cyan:   0 0 28px rgba(76,138,255,0.32);
+  --glow-btn:    0 4px 20px rgba(76,138,255,0.40), 0 0 0 1px rgba(255,255,255,0.06) inset;
 
-  /* Cartes (compat. historique du nom "glass" — plus de flou en clair) */
-  --glass-bg:    #FFFFFF;
-  --glass-blur:  0px;
+  /* Texte — sur fond sombre */
+  --text-pri:    #F0F4FF;
+  --text-sec:    #A5B4D0;
+  --text-ter:    #6B7FA8;
+  --text-inv:    #0D1B3E;
 
-  /* Ombres — remplacent le flou du glassmorphism en thème clair */
-  --shadow-card:       0 1px 2px rgba(17,20,45,0.04), 0 6px 16px rgba(17,20,45,0.05);
-  --shadow-card-hover: 0 4px 10px rgba(17,20,45,0.06), 0 14px 28px rgba(17,20,45,0.09);
-  --shadow-sidebar:    4px 0 24px rgba(10,12,25,0.18);
+  /* Glass */
+  --glass-bg:    rgba(255,255,255,0.07);
+  --glass-blur:  20px;
 
-  /* Sidebar — toujours sombre, quel que soit le thème du contenu */
-  --sidebar-bg:          #10121E;
-  --sidebar-bg-soft:     #14172A;
-  --sidebar-card:        rgba(255,255,255,0.055);
+  /* Ombres */
+  --shadow-card:       0 8px 32px rgba(2,4,20,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+  --shadow-card-hover: 0 12px 40px rgba(2,4,20,0.55), 0 0 32px rgba(76,138,255,0.12), inset 0 1px 0 rgba(255,255,255,0.10);
+  --shadow-sidebar:    4px 0 32px rgba(2,4,20,0.35);
+
+  /* Sidebar — fond bleu marine très sombre comme la maquette */
+  --sidebar-bg:          #0B1535;
+  --sidebar-bg-soft:     #0E1A40;
+  --sidebar-card:        rgba(255,255,255,0.05);
   --sidebar-border:      rgba(255,255,255,0.08);
-  --sidebar-text:        #E7E8F3;
-  --sidebar-text-muted:  #888EA6;
-  --sidebar-active-bg:   linear-gradient(135deg, #6366F1 0%, #8259F0 100%);
+  --sidebar-text:        #E8EEFF;
+  --sidebar-text-muted:  #7A8CB0;
+  --sidebar-active-bg:   linear-gradient(135deg, #4C8AFF 0%, #8B5CF6 100%);
   --sidebar-active-text: #FFFFFF;
 
-  /* Badges de statut — paires fond/texte calibrées pour un contraste correct
-     sur fond clair (surchargées en thème sombre plus bas). */
-  --badge-good-bg:    rgba(34,197,94,0.13);
-  --badge-good-text:  #15803d;
-  --badge-bad-bg:     rgba(239,68,68,0.12);
-  --badge-bad-text:   #dc2626;
+  /* Badges de statut */
+  --badge-good-bg:    rgba(34,197,94,0.15);
+  --badge-good-text:  #4ADE80;
+  --badge-bad-bg:     rgba(239,68,68,0.15);
+  --badge-bad-text:   #F87171;
   --badge-warn-bg:    rgba(245,158,11,0.15);
-  --badge-warn-text:  #b45309;
-  --badge-info-bg:    rgba(99,102,241,0.12);
-  --badge-info-text:  #4338ca;
-  --badge-default-bg: #EEF0F6;
+  --badge-warn-text:  #FCD34D;
+  --badge-info-bg:    rgba(76,138,255,0.15);
+  --badge-info-text:  #93C5FD;
+  --badge-default-bg: rgba(165,180,208,0.12);
   --badge-default-text: var(--text-sec);
 
   /* Misc */
@@ -207,6 +217,10 @@ html, body, #root {
 
 body {
   background: var(--bg);
+  background-image: radial-gradient(ellipse at 20% 20%, rgba(76,138,255,0.12) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.10) 0%, transparent 50%),
+                    radial-gradient(ellipse at 50% 50%, rgba(10,22,40,0.8) 0%, transparent 100%);
+  min-height: 100vh;
   color: var(--text-pri);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: var(--fs-body);
@@ -269,24 +283,19 @@ code, .font-mono, kbd {
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
 
-/* ── Card — carte blanche à ombre douce (nom de classe conservé pour
-   compatibilité : anciennement le glassmorphism) ── */
+/* ── Card glassmorphism — fond semi-transparent, backdrop-blur ── */
 .glass {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
   transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
 }
 .glass:hover {
   border-color: var(--border-md);
   box-shadow: var(--shadow-card-hover);
-}
-[data-theme="dark"] .glass {
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-}
-[data-theme="dark"] .glass:hover {
   border-color: var(--border-glow);
 }
 

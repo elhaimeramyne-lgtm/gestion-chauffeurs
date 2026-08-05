@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, FolderInput, SlidersHorizontal, Wand2,
@@ -12,7 +12,6 @@ import NotificationCenter from './NotificationCenter';
 import UniversalSearch from './UniversalSearch';
 import AssistantWidget from '../assistant/AssistantWidget';
 import { useAuth } from '../../context/AuthContext';
-import { ROLE_LABEL_KEYS } from '../../lib/navItems';
 
 const MOBILE_NAV = [
   { to: '/', icon: LayoutDashboard, exact: true, label: 'Accueil', labelKey: 'nav.dashboard' },
@@ -27,77 +26,90 @@ const MOBILE_NAV = [
 function DesktopTopBar() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const location = useLocation();
 
-  // Titre de la page courante (clé de traduction par route)
-  const pageTitleKey: Record<string, string> = {
-    '/': 'nav.dashboard',
-    '/import': 'nav.import',
-    '/regles': 'nav.rules',
-    '/correction': 'nav.correction',
-    '/comparaison': 'nav.comparison',
-    '/rapports': 'nav.reports',
-    '/lignes': 'nav.lignes',
-    '/lignes-fixes': 'nav.lignesFixes',
-    '/factures': 'nav.factures',
-    '/comparaison-excel': 'nav.diff',
-    '/journaux-presse': 'nav.journaux',
-    '/utilisateurs': 'nav.users',
-    '/journal': 'nav.journal',
-    '/admin': 'nav.adminDashboard',
-    '/administration': 'nav.administration',
-    '/mon-compte': 'nav.monCompte',
-    '/calendrier': 'nav.calendar'
-  };
-  const key = pageTitleKey[location.pathname];
-  const title = key ? t(key) : '';
+  const initials = (user?.displayName || user?.username || '?')
+    .split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <header
       className="hidden md:flex items-center justify-between shrink-0 px-6 relative"
       style={{
         height: 64,
-        background: 'var(--surface)',
-        backdropFilter: 'blur(18px) saturate(140%)',
-        borderBottom: '1px solid var(--border)',
+        background: 'rgba(11,21,53,0.85)',
+        backdropFilter: 'blur(20px) saturate(150%)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
         zIndex: 30
       }}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <p className="text-base font-semibold truncate" style={{ color: 'var(--text-pri)' }}>{title}</p>
-      </div>
+      {/* Left — hamburger (decoratif) */}
+      <div className="flex items-center gap-3">
+        <button
+          className="flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
+          style={{ width: 36, height: 36, color: 'var(--text-sec)' }}
+        >
+          <svg width="16" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="0" y1="1" x2="16" y2="1"/>
+            <line x1="0" y1="6" x2="12" y2="6"/>
+            <line x1="0" y1="11" x2="16" y2="11"/>
+          </svg>
+        </button>
 
-      <div className="flex items-center gap-2.5">
-        <div style={{ minWidth: 280 }}>
+        {/* Search pill — exactement comme la maquette */}
+        <div style={{ minWidth: 300 }}>
           <UniversalSearch />
         </div>
+      </div>
 
-        <Link
-          to="/calendrier"
-          title={t('nav.calendar', 'Calendrier')}
-          className="focus-ring flex items-center justify-center rounded-full transition-colors hover:bg-black/5"
-          style={{ width: 34, height: 34, background: 'var(--glass-bg)', border: '1px solid var(--border)', color: 'var(--text-sec)' }}
-        >
-          <CalendarDays size={15} />
-        </Link>
-
+      {/* Right */}
+      <div className="flex items-center gap-2">
+        {/* Cloche notifications */}
         <NotificationCenter />
 
-        {/* User chip */}
+        {/* Mail icon */}
+        <button
+          className="focus-ring flex items-center justify-center rounded-full transition-colors hover:bg-white/6"
+          style={{ width: 36, height: 36, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: 'var(--text-sec)' }}
+          title="Messages"
+        >
+          <svg width="16" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 16 14">
+            <rect x="1" y="1" width="14" height="12" rx="2"/>
+            <polyline points="1,3 8,8.5 15,3"/>
+          </svg>
+        </button>
+
+        {/* Fullscreen icon */}
+        <button
+          className="focus-ring flex items-center justify-center rounded-full transition-colors hover:bg-white/6"
+          style={{ width: 36, height: 36, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: 'var(--text-sec)' }}
+          title="Plein écran"
+          onClick={() => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }}
+        >
+          <CalendarDays size={14} />
+        </button>
+
+        {/* Divider */}
+        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.10)', margin: '0 4px' }} />
+
+        {/* Avatar + nom */}
         <Link
           to="/mon-compte"
-          className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full text-xs transition-colors hover:bg-black/5"
-          style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', color: 'var(--text-sec)' }}
+          className="flex items-center gap-2.5 focus-ring rounded-xl px-2 py-1.5 transition-colors hover:bg-white/5"
         >
-          <span
-            className="flex items-center justify-center rounded-full text-[11px] font-bold shrink-0"
-            style={{ width: 26, height: 26, background: 'var(--grad-brand)', color: '#fff' }}
+          <div
+            className="flex items-center justify-center rounded-full font-bold shrink-0"
+            style={{ width: 34, height: 34, background: 'var(--grad-brand)', color: '#fff', fontSize: 13 }}
           >
-            {(user?.displayName || user?.username || '?').slice(0, 1).toUpperCase()}
-          </span>
-          <span className="font-medium" style={{ color: 'var(--text-pri)' }}>
-            {user?.displayName || user?.username}
-          </span>
+            {initials}
+          </div>
+          <div className="text-right">
+            <p className="font-semibold leading-tight" style={{ fontSize: 13, color: 'var(--text-pri)' }}>
+              {user?.displayName || user?.username}
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--text-ter)' }}>Administrateur</p>
+          </div>
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-ter)' }}>
+            <polyline points="3,5 7,9 11,5"/>
+          </svg>
         </Link>
       </div>
     </header>
