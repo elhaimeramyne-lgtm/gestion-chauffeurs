@@ -270,9 +270,14 @@ export function Modal({
             filter: invert(1) opacity(0.5);
           }
           /* Options du select dans le dropdown navigateur */
-          .modal-body select option {
-            background:var(--card);
-            color:var(--text-pri);
+          .modal-body select option,
+          .modal-body select optgroup {
+            background: var(--select-bg) !important;
+            color: var(--text-pri) !important;
+          }
+          .modal-body select {
+            background: var(--select-bg);
+            color: var(--text-pri);
           }
           .modal-body label > span,
           .modal-body label > p {

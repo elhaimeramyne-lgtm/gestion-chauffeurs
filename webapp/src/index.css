@@ -18,9 +18,14 @@
     border-color: var(--border);
   }
   /* Les popups natifs de <select> (liste déroulante) suivent le thème courant. */
-  select option {
-    background-color: var(--card);
+  select {
+    background-color: var(--select-bg);
     color: var(--text-pri);
+  }
+  select option,
+  select optgroup {
+    background-color: var(--select-bg) !important;
+    color: var(--text-pri) !important;
   }
   input::placeholder, textarea::placeholder { color: var(--text-ter); }
 }
@@ -35,6 +40,7 @@
   --surface:     rgba(255,255,255,0.85);
   --card:        #FFFFFF;
   --card-hover:  #EEF0F7;
+  --select-bg:   #FFFFFF;
 
   /* Borders */
   --border:      #EAEBF2;
@@ -140,6 +146,7 @@
   --surface:     rgba(13,18,41,0.72);
   --card:        rgba(255,255,255,0.05);
   --card-hover:  rgba(255,255,255,0.085);
+  --select-bg:   #1a2035;
 
   --border:      rgba(255,255,255,0.13);
   --border-md:   rgba(255,255,255,0.20);
