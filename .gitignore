@@ -1,0 +1,7 @@
+webapp/node_modules/
+server/node_modules/
+webapp/dist/
+server/dist/
+server/.env
+.env
+*.log

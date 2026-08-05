@@ -1,0 +1,551 @@
+/* Inter — poids 400→800 + variable font pour performances optimales */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base des champs natifs ──
+   Tout <input>/<select>/<textarea> qui n'utilise pas la classe .dark-input
+   reste lisible par défaut, avec les couleurs du thème courant plutôt que de
+   dépendre du rendu natif du navigateur. Les classes utilitaires (bg-*,
+   border-*) posées sur un élément précis restent prioritaires puisqu'elles
+   sont plus spécifiques. */
+@layer base {
+  input, select, textarea {
+    background-color: var(--card);
+    color: var(--text-pri);
+    border-color: var(--border);
+  }
+  /* Les popups natifs de <select> (liste déroulante) suivent le thème courant. */
+  select option {
+    background-color: var(--card);
+    color: var(--text-pri);
+  }
+  input::placeholder, textarea::placeholder { color: var(--text-ter); }
+}
+
+/* ── CSS Variables — thème clair (défaut) ──────────────────────────────
+   Fond clair, cartes blanches à ombre douce, sidebar toujours sombre
+   (tokens --sidebar-*, indépendants du thème). Bascule vers le thème sombre
+   via [data-theme="dark"] sur <html> (voir lib/theme.ts). */
+:root {
+  /* Backgrounds */
+  --bg:          #F3F4FA;
+  --surface:     rgba(255,255,255,0.85);
+  --card:        #FFFFFF;
+  --card-hover:  #EEF0F7;
+
+  /* Borders */
+  --border:      #EAEBF2;
+  --border-md:   #DDDFEA;
+  --border-glow: rgba(99,102,241,0.45);
+
+  /* Accent palette — indigo / violet, cœur de l'identité */
+  --accent:      #6366F1;
+  --accent-dark: #4F46E5;
+  --accent2:     #22C55E;
+  --violet:      #8B5CF6;
+  --pink:        #EC4899;
+  --accent-warn: #F59E0B;
+  --accent-err:  #EF4444;
+
+  /* Dégradés signature */
+  --grad-brand:  linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  --grad-btn:    linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  --grad-line:   linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%);
+
+  /* Lueurs (halo léger, utilisé avec parcimonie en clair) */
+  --glow-violet: 0 8px 24px rgba(99,102,241,0.22);
+  --glow-cyan:   0 8px 24px rgba(99,102,241,0.16);
+  --glow-btn:    0 8px 20px rgba(99,102,241,0.30);
+
+  /* Texte */
+  --text-pri:    #171A2B;
+  --text-sec:    #6B7280;
+  --text-ter:    #9AA1B1;
+  --text-inv:    #FFFFFF;
+
+  /* Cartes (compat. historique du nom "glass" — plus de flou en clair) */
+  --glass-bg:    #FFFFFF;
+  --glass-blur:  0px;
+
+  /* Ombres — remplacent le flou du glassmorphism en thème clair */
+  --shadow-card:       0 1px 2px rgba(17,20,45,0.04), 0 6px 16px rgba(17,20,45,0.05);
+  --shadow-card-hover: 0 4px 10px rgba(17,20,45,0.06), 0 14px 28px rgba(17,20,45,0.09);
+  --shadow-sidebar:    4px 0 24px rgba(10,12,25,0.18);
+
+  /* Sidebar — toujours sombre, quel que soit le thème du contenu */
+  --sidebar-bg:          #10121E;
+  --sidebar-bg-soft:     #14172A;
+  --sidebar-card:        rgba(255,255,255,0.055);
+  --sidebar-border:      rgba(255,255,255,0.08);
+  --sidebar-text:        #E7E8F3;
+  --sidebar-text-muted:  #888EA6;
+  --sidebar-active-bg:   linear-gradient(135deg, #6366F1 0%, #8259F0 100%);
+  --sidebar-active-text: #FFFFFF;
+
+  /* Badges de statut — paires fond/texte calibrées pour un contraste correct
+     sur fond clair (surchargées en thème sombre plus bas). */
+  --badge-good-bg:    rgba(34,197,94,0.13);
+  --badge-good-text:  #15803d;
+  --badge-bad-bg:     rgba(239,68,68,0.12);
+  --badge-bad-text:   #dc2626;
+  --badge-warn-bg:    rgba(245,158,11,0.15);
+  --badge-warn-text:  #b45309;
+  --badge-info-bg:    rgba(99,102,241,0.12);
+  --badge-info-text:  #4338ca;
+  --badge-default-bg: #EEF0F6;
+  --badge-default-text: var(--text-sec);
+
+  /* Misc */
+  --radius-card: 18px;
+  --radius-btn:  999px;
+  --transition:  180ms cubic-bezier(0.4,0,0.2,1);
+
+  /* ── Système typographique Inter IAM ──
+     Texte général  : 14px / 400-500
+     Menu latéral   : 15px / 500
+     Titres pages   : 30-32px / 700
+     Cartes dash    : 18px / 600
+     Tableaux       : 13-14px / 400
+     Boutons        : 14px / 600
+     Interligne     : 1.5
+  */
+  --fs-table:   13px;
+  --fs-body:    14px;
+  --fs-nav:     15px;
+  --fs-card:    18px;
+  --fs-section: 20px;
+  --fs-page:    30px;
+  --fs-page-lg: 32px;
+
+  --fs-xs:   13px;
+  --fs-sm:   14px;
+  --fs-base: 14px;
+  --fs-lg:   18px;
+  --fs-xl:   20px;
+  --fs-2xl:  24px;
+  --fs-3xl:  30px;
+
+  --lh-normal: 1.5;
+  --lh-tight:  1.25;
+  --lh-loose:  1.65;
+}
+
+/* ── CSS Variables — thème sombre (facultatif, bascule via le sélecteur
+   "Mode sombre" dans la sidebar) — reprend l'ancienne identité "Aurora". */
+[data-theme="dark"] {
+  --bg:          #0B1023;
+  --surface:     rgba(13,18,41,0.72);
+  --card:        rgba(255,255,255,0.05);
+  --card-hover:  rgba(255,255,255,0.085);
+
+  --border:      rgba(255,255,255,0.13);
+  --border-md:   rgba(255,255,255,0.20);
+  --border-glow: rgba(168,85,247,0.55);
+
+  --accent:      #22d3ee;
+  --accent-dark: #06b6d4;
+  --accent2:     #34d399;
+  --violet:      #a855f7;
+  --pink:        #ec4899;
+  --accent-warn: #fbbf24;
+  --accent-err:  #f87171;
+
+  --grad-brand:  linear-gradient(135deg, #22d3ee 0%, #a855f7 55%, #ec4899 100%);
+  --grad-btn:    linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+  --grad-line:   linear-gradient(90deg, #22d3ee 0%, #a855f7 100%);
+
+  --glow-violet: 0 0 28px rgba(168,85,247,0.38);
+  --glow-cyan:   0 0 28px rgba(34,211,238,0.32);
+  --glow-btn:    0 4px 20px rgba(139,92,246,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset;
+
+  --text-pri:    #f1f5f9;
+  --text-sec:    #a3adc2;
+  --text-ter:    #6b7690;
+  --text-inv:    #07090f;
+
+  --glass-bg:    rgba(255,255,255,0.05);
+  --glass-blur:  18px;
+
+  --shadow-card:       0 8px 32px rgba(2,4,16,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-card-hover: 0 8px 32px rgba(2,4,16,0.5), 0 0 32px rgba(168,85,247,0.10), inset 0 1px 0 rgba(255,255,255,0.08);
+  --shadow-sidebar:    4px 0 32px rgba(2,4,16,0.35);
+
+  --sidebar-bg:          #0D1224;
+  --sidebar-bg-soft:     #101733;
+  --sidebar-card:        rgba(168,85,247,0.06);
+  --sidebar-border:      rgba(255,255,255,0.13);
+  --sidebar-text:        #f1f5f9;
+  --sidebar-text-muted:  #6b7690;
+  --sidebar-active-bg:   linear-gradient(135deg, rgba(56,189,248,0.22) 0%, rgba(168,85,247,0.22) 100%);
+  --sidebar-active-text: #f1f5f9;
+
+  --badge-good-bg:    rgba(52,211,153,0.13);
+  --badge-good-text:  #34d399;
+  --badge-bad-bg:     rgba(248,113,113,0.13);
+  --badge-bad-text:   #f87171;
+  --badge-warn-bg:    rgba(251,191,36,0.13);
+  --badge-warn-text:  #fbbf24;
+  --badge-info-bg:    rgba(96,165,250,0.13);
+  --badge-info-text:  #60a5fa;
+  --badge-default-bg: rgba(56,189,248,0.1);
+  --badge-default-text: #38bdf8;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-pri);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  font-weight: 400;
+  font-feature-settings: 'cv02','cv03','cv04','cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* ── Hiérarchie typographique stricte ── */
+h1 {
+  font-size: var(--fs-page-lg);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  font-family: 'Inter', sans-serif;
+}
+h2 {
+  font-size: var(--fs-page);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.018em;
+}
+h3 {
+  font-size: var(--fs-section);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+}
+
+p, span, li, label { font-size: var(--fs-body); line-height: var(--lh-normal); }
+
+input, select, textarea, button {
+  font-family: 'Inter', sans-serif;
+  font-size: var(--fs-body);
+}
+
+code, .font-mono, kbd {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--fs-table);
+  font-feature-settings: normal;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-md);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Focus ring ── */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+/* ── Card — carte blanche à ombre douce (nom de classe conservé pour
+   compatibilité : anciennement le glassmorphism) ── */
+.glass {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+}
+.glass:hover {
+  border-color: var(--border-md);
+  box-shadow: var(--shadow-card-hover);
+}
+[data-theme="dark"] .glass {
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+[data-theme="dark"] .glass:hover {
+  border-color: var(--border-glow);
+}
+
+/* ── Gradient accent text ── */
+.grad-text {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Gradient border button ── */
+.btn-accent {
+  background: var(--grad-btn);
+  color: var(--text-inv);
+  font-weight: 700;
+  border-radius: var(--radius-btn);
+  transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+.btn-accent:hover { opacity: 0.94; transform: translateY(-1px); box-shadow: var(--glow-btn); }
+.btn-accent:active { opacity: 1; transform: translateY(0); }
+
+/* ── Halo lumineux animé (arrière-plan) — thème sombre uniquement ── */
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  will-change: transform, opacity;
+  display: none;
+}
+[data-theme="dark"] .aurora-blob { display: block; }
+.aurora-decoration { display: none; }
+[data-theme="dark"] .aurora-decoration { display: block; }
+
+@keyframes floatSlow {
+  0%   { transform: translate(0,0) scale(1); }
+  50%  { transform: translate(3%, -4%) scale(1.08); }
+  100% { transform: translate(0,0) scale(1); }
+}
+@keyframes floatSlower {
+  0%   { transform: translate(0,0) scale(1); }
+  50%  { transform: translate(-4%, 3%) scale(1.05); }
+  100% { transform: translate(0,0) scale(1); }
+}
+@keyframes drift {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-14px); }
+}
+.animate-float-slow   { animation: floatSlow 22s ease-in-out infinite; }
+.animate-float-slower  { animation: floatSlower 28s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-slow, .animate-float-slower, .aurora-blob {
+    animation: none !important;
+  }
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+  50%       { box-shadow: 0 0 20px 4px rgba(99,102,241,0.22); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-up   { animation: fadeInUp 0.35s ease both; }
+.animate-fade-in   { animation: fadeIn 0.25s ease both; }
+.animate-slide-in  { animation: slideInRight 0.3s ease both; }
+
+/* Stagger pour les listes */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+/* ── Sidebar nav item — toujours sur fond sombre, tokens --sidebar-* ── */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: var(--fs-nav);
+  font-weight: 500;
+  line-height: var(--lh-normal);
+  color: var(--sidebar-text-muted);
+  transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+  cursor: pointer;
+  text-decoration: none;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--sidebar-text);
+}
+.nav-item.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+}
+.nav-item.active svg { color: var(--sidebar-active-text); }
+
+/* ═══════════════════════════════════════
+   TABLE — cohérente avec le thème courant
+   (nom de classe "dark-table" conservé pour compatibilité)
+   ═══════════════════════════════════════ */
+.dark-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Inter', sans-serif;
+  font-size: var(--fs-table);
+  line-height: var(--lh-normal);
+  color: var(--text-pri);
+}
+.dark-table thead tr {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-md);
+}
+.dark-table thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-ter);
+  white-space: nowrap;
+}
+.dark-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+.dark-table tbody tr:last-child { border-bottom: none; }
+.dark-table tbody tr:hover {
+  background: var(--bg);
+}
+.dark-table tbody td {
+  padding: 11px 14px;
+  color: var(--text-sec);
+  font-family: 'Inter', sans-serif;
+  font-size: var(--fs-table);
+  line-height: var(--lh-normal);
+  vertical-align: middle;
+}
+.dark-table tbody td:first-child { color: var(--text-pri); }
+
+/* Action buttons dans la table (nom "tbl-btn" conservé) */
+.tbl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-ter);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.tbl-btn:hover {
+  background: var(--bg);
+  color: var(--text-pri);
+}
+.tbl-btn.danger:hover {
+  background: rgba(239,68,68,0.10);
+  color: var(--accent-err);
+}
+
+/* ── Input / Select — 14px Inter (nom "dark-input" conservé) ── */
+.dark-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border-md);
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: var(--lh-normal);
+  color: var(--text-pri);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  appearance: none;
+}
+.dark-input::placeholder { color: var(--text-ter); }
+.dark-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.16);
+}
+.dark-input:hover:not(:focus) { border-color: var(--border-md); }
+
+/* ── Champs de formulaire génériques (label > span + input/select/textarea),
+   utilisés via la simple structure <label><span>Libellé</span><input/></label>
+   présente sur la quasi-totalité des pages. ── */
+label > span:first-child,
+label > p:first-child {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-ter);
+  margin-bottom: 7px;
+}
+label input:not([type="checkbox"]):not([type="radio"]),
+label select,
+label textarea {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border-md);
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--text-pri);
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+label input:focus,
+label select:focus,
+label textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.16);
+}
+
+/* ── Impression : n'affiche que l'élément marqué .print-area ── */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .print-area table { color: #000 !important; }
+  .print-area th, .print-area td { border: 1px solid #999 !important; color: #000 !important; }
+  .no-print { display: none !important; }
+}
+
+/* ── RTL (arabe) ──────────────────────────────────────────────────────── */
+[dir="rtl"] body {
+  font-family: 'Segoe UI', 'Tahoma', 'Geeza Pro', 'Inter', sans-serif;
+}
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+[dir="rtl"] .fixed.assistant-fab {
+  right: auto;
+  left: 24px;
+}
