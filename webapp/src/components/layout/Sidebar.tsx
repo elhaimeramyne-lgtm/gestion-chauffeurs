@@ -27,20 +27,19 @@ const COLLAPSE_KEY = 'iam-facturation:sidebarCollapsed:v2';
 /* ─── Icon color mapping for menu items ─── */
 const ICON_COLORS: Record<string, string> = {
   '/logistique': '#4C8AFF',
-  '/logistique/demandes': '#4C8AFF',
-  '/logistique/ordres-mission': '#60A5FA',
-  '/logistique/chauffeurs': '#A78BFA',
+  '/logistique/demandes': '#60A5FA',
+  '/logistique/deplacements': '#A78BFA',
+  '/logistique/chauffeurs': '#C084FC',
   '/logistique/parc-auto': '#34D399',
   '/logistique/maintenance': '#FCD34D',
   '/logistique/carburant': '#F97316',
   '/logistique/declarations': '#F87171',
-  '/logistique/notifications': '#60A5FA',
-  '/logistique/deplacements': '#818CF8',
+  '/logistique/gerer-demandes-chauffeur': '#FB923C',
+  '/logistique/notifications': '#22D3EE',
   '/logistique/demande-chauffeur': '#C084FC',
-  '/logistique/gerer-demandes': '#F472B6',
   '/admin': '#34D399',
-  '/utilisateurs': '#A78BFA',
   '/journal': '#FCD34D',
+  '/utilisateurs': '#A78BFA',
   '/administration': '#F97316',
 };
 
@@ -362,8 +361,9 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto" style={{ padding: collapsed ? '12px 8px' : '12px 10px' }}>
 
-        {/* Tableau de bord en item direct */}
+        {/* Menu principal logistique */}
         <SectionLabel label="Menu Principal" collapsed={collapsed} />
+
         <NavItem
           to="/logistique"
           label="Tableau de bord"
@@ -371,7 +371,6 @@ export default function Sidebar() {
           exact
           collapsed={collapsed}
         />
-
         <NavItem
           to="/logistique/demandes"
           label="Demandes chauffeur"
@@ -382,7 +381,7 @@ export default function Sidebar() {
         <NavItem
           to="/logistique/deplacements"
           label="Ordres de mission"
-          icon={FileText}
+          icon={Truck}
           collapsed={collapsed}
           badge={badgeCounts.missionsAttente}
         />
@@ -394,28 +393,15 @@ export default function Sidebar() {
         />
         <NavItem
           to="/logistique/parc-auto"
-          label="Véhicules"
+          label="Parc automobile"
           icon={Car}
           collapsed={collapsed}
         />
         <NavItem
-          to="/logistique/parc-auto"
-          label="Parc automobile"
-          icon={ParkingSquare}
+          to="/logistique/maintenance"
+          label="Maintenance"
+          icon={Wrench}
           collapsed={collapsed}
-        />
-        <NavItem
-          to="/logistique/demandes"
-          label="Missions en cours"
-          icon={Truck}
-          collapsed={collapsed}
-        />
-        <NavItem
-          to="/logistique/declarations"
-          label="Facturation"
-          icon={Receipt}
-          collapsed={collapsed}
-          badge={badgeCounts.declarationsNouv}
         />
         <NavItem
           to="/logistique/carburant"
@@ -425,8 +411,15 @@ export default function Sidebar() {
         />
         <NavItem
           to="/logistique/declarations"
-          label="Documents"
-          icon={BookOpen}
+          label="Déclarations"
+          icon={Receipt}
+          collapsed={collapsed}
+          badge={badgeCounts.declarationsNouv}
+        />
+        <NavItem
+          to="/logistique/gerer-demandes-chauffeur"
+          label="Gérer les demandes"
+          icon={FileText}
           collapsed={collapsed}
         />
         <NavItem
@@ -439,10 +432,8 @@ export default function Sidebar() {
         {/* Séparateur */}
         <div style={{ height: 1, background: 'var(--sidebar-border)', margin: '10px 4px' }} />
 
-        {/* Groupes Facturation & Gestion (si rôle) */}
-        {collapsed ? null : (
-          <SectionLabel label="Autres modules" collapsed={collapsed} />
-        )}
+        {/* Groupes Facturation & Gestion */}
+        <SectionLabel label="Autres modules" collapsed={collapsed} />
         <NavGroup
           icon={Layers}
           label="Facturation IAM"
@@ -462,25 +453,26 @@ export default function Sidebar() {
           onToggle={() => toggleGroup('gestion')}
         />
 
-        {/* Administration */}
+        {/* Administration — GESTIONNAIRE */}
         {!isAdmin && hasMinRole('GESTIONNAIRE') && (
           <>
             <div style={{ height: 1, background: 'var(--sidebar-border)', margin: '8px 4px' }} />
-            <NavItem to="/admin" label="Audit & Journaux" icon={BookOpen} collapsed={collapsed} />
-            <NavItem to="/admin" label="Paramètres" icon={Cog} collapsed={collapsed} />
+            <SectionLabel label="Administration" collapsed={collapsed} />
+            <NavItem to="/admin" label="Tableau admin" icon={BookOpen} collapsed={collapsed} />
             <NavItem to="/utilisateurs" label="Utilisateurs & Rôles" icon={UserCog} collapsed={collapsed} />
           </>
         )}
 
+        {/* Administration — ADMIN */}
         {isAdmin && (
           <>
             <div style={{ height: 1, background: 'var(--sidebar-border)', margin: '8px 4px' }} />
             <SectionLabel label="Administration" collapsed={collapsed} />
-            <NavItem to="/admin" label="Audit & Journaux" icon={BookOpen} collapsed={collapsed} />
-            <NavItem to="/admin" label="Paramètres" icon={Cog} collapsed={collapsed} />
+            <NavItem to="/admin" label="Tableau admin" icon={BookOpen} collapsed={collapsed} />
+            <NavItem to="/journal" label="Journal d'activité" icon={Cog} collapsed={collapsed} />
             <NavItem to="/utilisateurs" label="Utilisateurs & Rôles" icon={UserCog} collapsed={collapsed} />
             {isSuperAdmin && (
-              <NavItem to="/administration" label="Administration" icon={Settings} collapsed={collapsed} />
+              <NavItem to="/administration" label="Super Admin" icon={Settings} collapsed={collapsed} />
             )}
           </>
         )}

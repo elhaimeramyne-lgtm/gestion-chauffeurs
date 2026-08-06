@@ -34,6 +34,7 @@ import DeplacementsPage from './pages/DeplacementsPage';
 import ChauffeurPortalPage from './pages/ChauffeurPortalPage';
 import MaMissionPage from './pages/MaMissionPage';
 import DriverLayout from './components/layout/DriverLayout';
+import NotificationsPage from './pages/NotificationsPage';
 import DownloadPage from './pages/DownloadPage';
 import { useAuth } from './context/AuthContext';
 
@@ -117,6 +118,7 @@ export default function App() {
         <Route path="/logistique/demande-chauffeur" element={<DemandeChauffeurPage />} />
         <Route path="/logistique/gerer-demandes-chauffeur" element={<GererDemandesChauffeurPage />} />
         <Route path="/logistique/deplacements" element={<DeplacementsPage />} />
+        <Route path="/logistique/notifications" element={<NotificationsPage />} />
         {isAdmin && <Route path="/utilisateurs" element={<UsersPage />} />}
         {isAdmin && <Route path="/journal" element={<JournalPage />} />}
         {hasMinRole('GESTIONNAIRE') && <Route path="/admin" element={<SuperAdminDashboard />} />}
