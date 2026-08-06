@@ -9,7 +9,7 @@ const COLOR_MAP: Record<string, { icon: typeof Info; color: string }> = {
 };
 
 export default function NotificationsPage() {
-  const { notifications, unreadCount, connected, markRead, refresh } = useNotifications();
+  const { notifications, unreadCount, lastSeenAt, connected, markRead, refresh } = useNotifications();
 
   return (
     <div>
@@ -92,6 +92,7 @@ export default function NotificationsPage() {
                   className="flex items-start gap-4 px-5 py-4 transition-colors hover:bg-white/5"
                   style={{
                     borderBottom: idx < notifications.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                    background: new Date(n.createdAt) > new Date(lastSeenAt) ? 'rgba(76,138,255,0.05)' : 'transparent',
                   }}
                 >
                   <div
@@ -101,7 +102,13 @@ export default function NotificationsPage() {
                     <Icon size={16} style={{ color: entry.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p style={{ fontSize: 14, color: 'var(--text-pri)' }}>{n.message}</p>
+                    <p style={{
+                      fontSize: 14,
+                      color: 'var(--text-pri)',
+                      fontWeight: new Date(n.createdAt) > new Date(lastSeenAt) ? 600 : 400,
+                    }}>
+                      {n.message}
+                    </p>
                     <p style={{ fontSize: 11, color: 'var(--text-ter)', marginTop: 3 }}>
                       <span
                         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded"
@@ -111,11 +118,19 @@ export default function NotificationsPage() {
                       </span>
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Clock size={11} style={{ color: 'var(--text-ter)' }} />
-                    <span style={{ fontSize: 11, color: 'var(--text-ter)', whiteSpace: 'nowrap' }}>
-                      {new Date(n.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {new Date(n.createdAt) > new Date(lastSeenAt) && (
+                      <span
+                        className="rounded-full shrink-0"
+                        style={{ width: 8, height: 8, background: '#4C8AFF', display: 'inline-block', boxShadow: '0 0 6px rgba(76,138,255,0.8)' }}
+                      />
+                    )}
+                    <div className="flex items-center gap-1">
+                      <Clock size={11} style={{ color: 'var(--text-ter)' }} />
+                      <span style={{ fontSize: 11, color: 'var(--text-ter)', whiteSpace: 'nowrap' }}>
+                        {new Date(n.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
                   </div>
                 </li>
               );

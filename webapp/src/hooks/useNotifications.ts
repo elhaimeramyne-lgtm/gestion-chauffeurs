@@ -2,11 +2,13 @@
  * useNotifications — consomme le flux SSE /api/notifications/stream
  *
  * Reconnexion automatique exponentielle (1s → 30s) en cas de coupure.
- * Fallback sur polling HTTP si EventSource n'est pas disponible (rare).
+ * lastSeenAt est persisté en localStorage — "Tout marquer lu" est immédiat
+ * et survit aux reconnexions SSE.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
+const LS_KEY = 'iam_notif_lastSeenAt';
 
 export type NotifColor = 'red' | 'green' | 'orange' | 'blue';
 export type NotifKind = 'facture_echeance' | 'ligne_creee' | 'sauvegarde' | 'connexion' | 'system_error' | 'mission_assignee' | 'mission_statut';
@@ -36,15 +38,28 @@ const COLOR_HEX: Record<NotifColor, string> = {
 };
 export { COLOR_HEX };
 
+function getStoredLastSeen(): string {
+  try { return localStorage.getItem(LS_KEY) ?? new Date(0).toISOString(); } catch { return new Date(0).toISOString(); }
+}
+function storeLastSeen(ts: string) {
+  try { localStorage.setItem(LS_KEY, ts); } catch { /* ignore */ }
+}
+
 export function useNotifications(): NotificationState {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [lastSeenAt, setLastSeenAt] = useState(new Date(0).toISOString());
+  const [lastSeenAt, setLastSeenAt] = useState<string>(getStoredLastSeen);
   const [connected, setConnected] = useState(false);
   const esRef = useRef<EventSource | null>(null);
   const retryDelay = useRef(1000);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  // lastSeenAt ref pour l'utiliser dans les callbacks sans re-créer connect
+  const lastSeenRef = useRef<string>(getStoredLastSeen());
+
+  // unreadCount calculé localement à partir des notifications et de lastSeenAt
+  const unreadCount = notifications.filter(
+    (n) => new Date(n.createdAt) > new Date(lastSeenAt)
+  ).length;
 
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
@@ -61,8 +76,14 @@ export function useNotifications(): NotificationState {
             lastSeenAt: string;
           };
           setNotifications(payload.notifications);
-          setUnreadCount(payload.unreadCount);
-          setLastSeenAt(payload.lastSeenAt);
+          // On N'écrase PAS lastSeenAt depuis le serveur — on garde celui du localStorage
+          // sauf si le serveur renvoie une date plus récente
+          const serverSeen = payload.lastSeenAt;
+          if (new Date(serverSeen) > new Date(lastSeenRef.current)) {
+            lastSeenRef.current = serverSeen;
+            setLastSeenAt(serverSeen);
+            storeLastSeen(serverSeen);
+          }
           retryDelay.current = 1000;
           setConnected(true);
         } catch {
@@ -74,14 +95,12 @@ export function useNotifications(): NotificationState {
         if (!mountedRef.current) return;
         setConnected(false);
         es.close();
-        // Reconnexion exponentielle plafonnée à 30s
         retryTimer.current = setTimeout(() => {
           retryDelay.current = Math.min(retryDelay.current * 2, 30_000);
           connect();
         }, retryDelay.current);
       };
     } catch {
-      // EventSource indisponible — ne pas bloquer
       setConnected(false);
     }
   }, []);
@@ -97,16 +116,19 @@ export function useNotifications(): NotificationState {
   }, [connect]);
 
   const markRead = useCallback(async () => {
+    // Mise à jour locale immédiate — plus de badge même si SSE tarde
+    const now = new Date().toISOString();
+    lastSeenRef.current = now;
+    setLastSeenAt(now);
+    storeLastSeen(now);
     try {
       await fetch(`${API_BASE}/notifications/mark-read`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
-      setUnreadCount(0);
-      setLastSeenAt(new Date().toISOString());
     } catch {
-      // ignore
+      // ignore — l'état local est déjà correct
     }
   }, []);
 

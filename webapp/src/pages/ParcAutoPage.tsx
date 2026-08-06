@@ -141,75 +141,81 @@ function VehiculeForm({ initial, onClose }: { initial?: Vehicule | null; onClose
   };
 
   return (
-    <form className="space-y-3" onSubmit={handleSubmit}>
-      <div className="grid grid-cols-2 gap-3">
-        <label>
-          <span>Immatriculation *</span>
-          <input required disabled={Boolean(initial)} value={immatriculation} onChange={(e) => setImmatriculation(e.target.value)} placeholder="12345-A-6" className={initial ? 'opacity-60' : ''} />
-        </label>
-        <label>
-          <span>Année</span>
-          <input type="number" value={annee} onChange={(e) => setAnnee(e.target.value)} placeholder="2022" />
-        </label>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <label>
-          <span>Marque *</span>
-          <input required value={marque} onChange={(e) => setMarque(e.target.value)} placeholder="Dacia" />
-        </label>
-        <label>
-          <span>Modèle *</span>
-          <input required value={modele} onChange={(e) => setModele(e.target.value)} placeholder="Duster" />
-        </label>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <label>
-          <span>Carburant</span>
-          <select value={carburant} onChange={(e) => setCarburant(e.target.value as VehiculeCarburant)}>
-            {(Object.keys(CARBURANT_LABELS) as VehiculeCarburant[]).map((c) => (
-              <option key={c} value={c}>{CARBURANT_LABELS[c]}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>Kilométrage actuel</span>
-          <input type="number" min={0} value={kilometrage} onChange={(e) => setKilometrage(e.target.value)} />
-        </label>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <label>
-          <span>Expiration assurance {initial?.assuranceExpiration ? `(actuelle : ${initial.assuranceExpiration})` : ''}</span>
-          <input type="date" value={assuranceExpiration} onChange={(e) => setAssuranceExpiration(e.target.value)} />
-        </label>
-        <label>
-          <span>Expiration visite technique {initial?.visiteTechniqueExpiration ? `(actuelle : ${initial.visiteTechniqueExpiration})` : ''}</span>
-          <input type="date" value={visiteTechniqueExpiration} onChange={(e) => setVisiteTechniqueExpiration(e.target.value)} />
-        </label>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <label>
-          <span>Date vidange {initial?.derniereVidange ? `(dernière : ${initial.derniereVidange})` : ''}</span>
-          <input type="date" value={derniereVidange} onChange={(e) => setDerniereVidange(e.target.value)} />
-        </label>
-        <label>
-          <span>Expiration vidange {initial?.vidangeExpiration ? `(actuelle : ${initial.vidangeExpiration})` : ''}</span>
-          <input type="date" value={vidangeExpiration} onChange={(e) => setVidangeExpiration(e.target.value)} />
-        </label>
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      {/* Infos principales — 3 colonnes */}
+      <div>
+        <p className="text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: 'var(--text-ter)' }}>Informations principales</p>
+        <div className="grid grid-cols-3 gap-3">
+          <label>
+            <span>Immatriculation *</span>
+            <input required disabled={Boolean(initial)} value={immatriculation} onChange={(e) => setImmatriculation(e.target.value)} placeholder="12345-A-6" className={initial ? 'opacity-60' : ''} />
+          </label>
+          <label>
+            <span>Marque *</span>
+            <input required value={marque} onChange={(e) => setMarque(e.target.value)} placeholder="Dacia" />
+          </label>
+          <label>
+            <span>Modèle *</span>
+            <input required value={modele} onChange={(e) => setModele(e.target.value)} placeholder="Duster" />
+          </label>
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-3">
+          <label>
+            <span>Année</span>
+            <input type="number" value={annee} onChange={(e) => setAnnee(e.target.value)} placeholder="2022" />
+          </label>
+          <label>
+            <span>Carburant</span>
+            <select value={carburant} onChange={(e) => setCarburant(e.target.value as VehiculeCarburant)}>
+              {(Object.keys(CARBURANT_LABELS) as VehiculeCarburant[]).map((c) => (
+                <option key={c} value={c}>{CARBURANT_LABELS[c]}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Kilométrage actuel</span>
+            <input type="number" min={0} value={kilometrage} onChange={(e) => setKilometrage(e.target.value)} />
+          </label>
+        </div>
       </div>
 
-      <div className="pt-2" style={{ borderTop: '1px solid var(--border)' }}>
-        <p className="text-xs font-semibold mb-2 pt-2 flex items-center gap-1.5" style={{ color: 'var(--text-ter)' }}><Droplet size={12} /> Entretien — vidange</p>
+      {/* Documents — 2 colonnes */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14 }}>
+        <p className="text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: 'var(--text-ter)' }}>Documents & échéances</p>
         <div className="grid grid-cols-2 gap-3">
           <label>
-            <span>Km lors de la dernière vidange</span>
+            <span>Expiration assurance {initial?.assuranceExpiration ? `(actuelle : ${initial.assuranceExpiration})` : ''}</span>
+            <input type="date" value={assuranceExpiration} onChange={(e) => setAssuranceExpiration(e.target.value)} />
+          </label>
+          <label>
+            <span>Expiration visite technique {initial?.visiteTechniqueExpiration ? `(actuelle : ${initial.visiteTechniqueExpiration})` : ''}</span>
+            <input type="date" value={visiteTechniqueExpiration} onChange={(e) => setVisiteTechniqueExpiration(e.target.value)} />
+          </label>
+          <label>
+            <span>Date dernière vidange {initial?.derniereVidange ? `(actuelle : ${initial.derniereVidange})` : ''}</span>
+            <input type="date" value={derniereVidange} onChange={(e) => setDerniereVidange(e.target.value)} />
+          </label>
+          <label>
+            <span>Expiration vidange {initial?.vidangeExpiration ? `(actuelle : ${initial.vidangeExpiration})` : ''}</span>
+            <input type="date" value={vidangeExpiration} onChange={(e) => setVidangeExpiration(e.target.value)} />
+          </label>
+        </div>
+      </div>
+
+      {/* Vidange — 3 colonnes */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14 }}>
+        <p className="text-xs font-bold mb-2 flex items-center gap-1.5 uppercase tracking-widest" style={{ color: 'var(--text-ter)' }}>
+          <Droplet size={11} /> Entretien — vidange
+        </p>
+        <div className="grid grid-cols-3 gap-3">
+          <label>
+            <span>Km dernière vidange</span>
             <input type="number" min={0} value={kilometrageDerniereVidange} onChange={(e) => setKilometrageDerniereVidange(e.target.value)} placeholder="120000" />
           </label>
           <label>
             <span>Prochaine vidange à (km)</span>
             <input type="number" min={0} value={kilometrageProchaineVidange} onChange={(e) => setKilometrageProchaineVidange(e.target.value)} placeholder="130000" />
           </label>
-        </div>
-        <div className="grid grid-cols-2 gap-3 mt-3">
           <label>
             <span>Type d'huile</span>
             <input value={typeHuile} onChange={(e) => setTypeHuile(e.target.value)} placeholder="5W30" />
@@ -218,16 +224,19 @@ function VehiculeForm({ initial, onClose }: { initial?: Vehicule | null; onClose
             <span>Garage</span>
             <input value={garageVidange} onChange={(e) => setGarageVidange(e.target.value)} placeholder="Garage Al Amal" />
           </label>
+          <label className="col-span-2">
+            <span>Observations vidange</span>
+            <textarea rows={2} value={vidangeObservations} onChange={(e) => setVidangeObservations(e.target.value)} placeholder="Filtre à huile changé, niveau vérifié…" />
+          </label>
         </div>
-        <label className="block mt-3">
-          <span>Observations vidange</span>
-          <textarea rows={2} value={vidangeObservations} onChange={(e) => setVidangeObservations(e.target.value)} placeholder="Filtre à huile changé, niveau vérifié…" />
-        </label>
       </div>
 
-      <div className="pt-2" style={{ borderTop: '1px solid var(--border)' }}>
-        <p className="text-xs font-semibold mb-2 pt-2 flex items-center gap-1.5" style={{ color: 'var(--text-ter)' }}><CreditCard size={12} /> Jawaz</p>
-        <div className="grid grid-cols-2 gap-3">
+      {/* Jawaz — 4 colonnes */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14 }}>
+        <p className="text-xs font-bold mb-2 flex items-center gap-1.5 uppercase tracking-widest" style={{ color: 'var(--text-ter)' }}>
+          <CreditCard size={11} /> Jawaz
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <label>
             <span>Numéro Jawaz</span>
             <input value={jawazNumero} onChange={(e) => setJawazNumero(e.target.value)} placeholder="JW-000000" />
@@ -236,8 +245,6 @@ function VehiculeForm({ initial, onClose }: { initial?: Vehicule | null; onClose
             <span>Solde actuel (DH) {initial?.jawazSolde !== undefined ? `(actuel : ${initial.jawazSolde} DH)` : ''}</span>
             <input type="number" min={0} step="0.01" value={jawazSolde} onChange={(e) => setJawazSolde(e.target.value)} />
           </label>
-        </div>
-        <div className="grid grid-cols-2 gap-3 mt-3">
           <label>
             <span>Dernière recharge {initial?.jawazDerniereRecharge ? `(actuelle : ${initial.jawazDerniereRecharge})` : ''}</span>
             <input type="date" value={jawazDerniereRecharge} onChange={(e) => setJawazDerniereRecharge(e.target.value)} />
@@ -249,10 +256,11 @@ function VehiculeForm({ initial, onClose }: { initial?: Vehicule | null; onClose
         </div>
       </div>
 
-      <label>
+      <label style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14, display: 'block' }}>
         <span>Notes</span>
         <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Équipements, remarques…" />
       </label>
+
       {error && (
         <p className="text-xs rounded-lg px-3 py-2" style={{ color: 'var(--accent-err)', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</p>
       )}
@@ -432,7 +440,7 @@ function VehiculeDetail({ id, onClose }: { id: number; onClose: () => void }) {
 
   if (editing && vehicule) {
     return (
-      <Modal open onClose={() => setEditing(false)} title={`Modifier ${vehicule.immatriculation}`} width="md">
+      <Modal open onClose={() => setEditing(false)} title={`Modifier ${vehicule.immatriculation}`} width="xl">
         <VehiculeForm initial={vehicule} onClose={() => { setEditing(false); load(); }} />
       </Modal>
     );
@@ -788,7 +796,7 @@ export default function ParcAutoPage() {
       )}
 
       {showCreate && (
-        <Modal open onClose={() => setShowCreate(false)} title="Nouveau véhicule" width="md">
+        <Modal open onClose={() => setShowCreate(false)} title="Nouveau véhicule" width="xl">
           <VehiculeForm onClose={() => setShowCreate(false)} />
         </Modal>
       )}

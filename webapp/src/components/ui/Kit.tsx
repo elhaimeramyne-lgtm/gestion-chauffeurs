@@ -226,29 +226,54 @@ export function Modal({
   title: string;
   description?: string;
   children: React.ReactNode;
-  width?: 'sm' | 'md' | 'lg';
+  width?: 'sm' | 'md' | 'lg' | 'xl';
 }) {
   if (!open) return null;
-  const widthClass = width === 'sm' ? 'max-w-sm' : width === 'lg' ? 'max-w-2xl' : 'max-w-lg';
+  const widthClass = width === 'sm' ? 'max-w-sm'
+    : width === 'lg' ? 'max-w-2xl'
+    : width === 'xl' ? 'max-w-4xl'
+    : 'max-w-lg';
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
       <div className="fixed inset-0 animate-fade-in" style={{ background: 'rgba(8,12,18,0.82)', backdropFilter: 'blur(6px)' }} onClick={onClose} />
       <div
-        className={`relative w-full ${widthClass} my-8 rounded-2xl shadow-2xl animate-fade-up`}
-        style={{ background: 'var(--card)', border: '1px solid var(--border-md)' }}
+        className={`relative w-full ${widthClass} my-6 rounded-2xl shadow-2xl animate-fade-up`}
+        style={{
+          background: 'rgba(13,27,62,0.97)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          backdropFilter: 'blur(24px)',
+          maxHeight: 'calc(100vh - 48px)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
-        <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
-          <h3 className="font-bold" style={{ fontSize: 'var(--fs-lg)', color: 'var(--text-pri)' }}>{title}</h3>
-          {description && <p className="mt-1" style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-sec)' }}>{description}</p>}
+        {/* Header fixe */}
+        <div className="px-6 pt-5 pb-4 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.09)' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold" style={{ fontSize: 'var(--fs-lg)', color: 'var(--text-pri)' }}>{title}</h3>
+              {description && <p className="mt-1" style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-sec)' }}>{description}</p>}
+            </div>
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center rounded-xl transition-colors hover:bg-white/8"
+              style={{ width: 32, height: 32, color: 'var(--text-ter)', flexShrink: 0 }}
+              aria-label="Fermer"
+            >
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        {/* Champs de formulaire à l'intérieur des modales — suit le thème courant. */}
+        {/* Body scrollable */}
         <style>{`
           .modal-body input:not([type=checkbox]):not([type=radio]),
           .modal-body select,
           .modal-body textarea {
             width:100%;
-            background:var(--card);
-            border:1px solid var(--border-md);
+            background:rgba(255,255,255,0.07);
+            border:1px solid rgba(255,255,255,0.14);
             border-radius:9px;
             padding:9px 12px;
             font-size:14px;
@@ -264,12 +289,11 @@ export function Modal({
           .modal-body select:focus,
           .modal-body textarea:focus {
             border-color:var(--accent);
-            box-shadow:0 0 0 3px rgba(99,102,241,0.16);
+            box-shadow:0 0 0 3px rgba(76,138,255,0.20);
           }
-          [data-theme="dark"] .modal-body input[type="date"]::-webkit-calendar-picker-indicator {
+          .modal-body input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(1) opacity(0.5);
           }
-          /* Options du select dans le dropdown navigateur */
           .modal-body select option,
           .modal-body select optgroup {
             background: var(--select-bg) !important;
@@ -289,8 +313,14 @@ export function Modal({
             color:var(--text-ter);
             margin-bottom:7px;
           }
+          .modal-body input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
         `}</style>
-        <div className="px-6 py-5 modal-body">{children}</div>
+        <div className="px-6 py-5 modal-body overflow-y-auto flex-1" style={{ overscrollBehavior: 'contain' }}>
+          {children}
+        </div>
       </div>
     </div>
   );
